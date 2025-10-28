@@ -1,14 +1,24 @@
 const express = require('express');
-const db = require('./config/db.config');
+const AppError = require('./utils/appError');
+const hospitalRoutes = require('./routes/hospital.routes');
+const globalErrorHandler = require('./controllers/error.controller');
 
 const app = express();
 
-app.get('/', async (req, res) => {
-  const [rows] = await db.query('SELECT * FROM country');
-  res.status(200).json({
-    message: 'These are cities',
-    data: rows
-  });
+// Import hospital routes
+
+app.set('query parser', 'extended');
+
+app.use(express.json());
+
+app.use('/gsh/api/hospitals', hospitalRoutes);
+
+app.all('/*', (req, res, next) => {
+  next(
+    new AppError(`cannot find route ${req.originalUrl} from our server`, 404)
+  );
 });
+
+app.use(globalErrorHandler);
 
 module.exports = app;
