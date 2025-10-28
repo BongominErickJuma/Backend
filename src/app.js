@@ -1,8 +1,8 @@
 const express = require('express');
 const AppError = require('./utils/appError');
-const hospitalRoutes = require('./routes/hospital.routes');
 const globalErrorHandler = require('./controllers/error.controller');
-
+const hospitalRoutes = require('./routes/hospital.routes');
+const patientRoutes = require('./routes/patient.routes');
 const app = express();
 
 // Import hospital routes
@@ -12,6 +12,7 @@ app.set('query parser', 'extended');
 app.use(express.json());
 
 app.use('/gsh/api/hospitals', hospitalRoutes);
+app.use('/gsh/api/patients', patientRoutes);
 
 app.all('/*', (req, res, next) => {
   next(
