@@ -112,6 +112,7 @@ CREATE TABLE partner_organizations (
     application_reference VARCHAR(50) UNIQUE,
     application_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     approval_date TIMESTAMP NULL,
+
     
     subscription_tier ENUM('free', 'basic', 'premium', 'enterprise') DEFAULT 'free',
     subscription_start_date DATE,
@@ -165,6 +166,7 @@ CREATE TABLE partner_users (
     email_verified BOOLEAN DEFAULT FALSE,
     email_verification_token VARCHAR(100),
     email_verified_at TIMESTAMP NULL,
+
     
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,

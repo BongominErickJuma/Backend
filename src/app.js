@@ -1,4 +1,5 @@
 const express = require('express');
+const cookieParser = require('cookie-parser');
 const AppError = require('./utils/appError');
 const globalErrorHandler = require('./controllers/error.controller');
 const hospitalRoutes = require('./routes/hospital.routes');
@@ -10,9 +11,10 @@ const app = express();
 app.set('query parser', 'extended');
 
 app.use(express.json());
+app.use(cookieParser());
 
-app.use('/gsh/api/hospitals', hospitalRoutes);
-app.use('/gsh/api/patients', patientRoutes);
+app.use('/gsgh/api/hospitals', hospitalRoutes);
+app.use('/gsgh/api/patients', patientRoutes);
 
 app.all('/*', (req, res, next) => {
   next(
