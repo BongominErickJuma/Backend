@@ -1,12 +1,15 @@
 const jwt = require('jsonwebtoken');
 
-const signToken = id => {
-  return jwt.sign({ id }, process.env.JWT_SECRET, {
-    expiresIn: process.env.JWT_EXPIRES_IN
-  });
+const signToken = (id, loginType) => {
+  return jwt.sign(
+    { id, loginType }, // 👈 include extra data
+    process.env.JWT_SECRET,
+    { expiresIn: process.env.JWT_EXPIRES_IN }
+  );
 };
-const createSendToken = (res, user, statusCode) => {
-  const token = signToken(user.patient_id);
+
+const createSendToken = (res, user, id, loginType, statusCode) => {
+  const token = signToken(id, loginType);
 
   const cookieOptions = {
     expires: new Date(
@@ -25,5 +28,4 @@ const createSendToken = (res, user, statusCode) => {
     data: user
   });
 };
-
 module.exports = createSendToken;

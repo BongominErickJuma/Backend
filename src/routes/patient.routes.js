@@ -4,8 +4,8 @@ const authController = require('../controllers/auth.controller');
 
 const router = express.Router();
 
-router.post('/signup', authController.signup);
-router.post('/login', authController.login);
+router.post('/signup', patientController.signup);
+router.post('/login', patientController.login);
 router.get('/logout', authController.logout);
 
 router.use(authController.protect);

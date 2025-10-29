@@ -10,68 +10,6 @@ const generatePasswordResetToken = require('../utils/generatePasswordResetToken'
 // const generateEmailVerificationToken = require('../utils/generateEmailVerificationToken');
 // const sendUserEmail = require('../utils/sendUserEmail');
 
-// SIGN UP USERS
-
-exports.signup = catchAsync(async (req, res, next) => {
-  const data = req.body;
-
-  if (!data.email || !data.password_hash) {
-    return next(new AppError('Please provide email and password', 400));
-  }
-
-  data.password_hash = await bcrypt.hash(data.password_hash, 12);
-
-  const result = await db.query('INSERT INTO patients SET ?', [data]);
-
-  const [newPatient] = await db.query(
-    'SELECT * FROM patients WHERE patient_id = ?',
-    [result[0].insertId]
-  );
-
-  res.status(201).json({
-    status: 'success',
-    message: 'Your Data has been saved successfully',
-    data: newPatient[0]
-  });
-});
-
-// LOGIN USERS
-
-exports.login = catchAsync(async (req, res, next) => {
-  const { phone_number, password_hash } = req.body;
-
-  // 1. Check if email and password exist
-  if (!password_hash || !phone_number) {
-    return next(new AppError('Please provide phone number and password', 400));
-  }
-
-  // 2. Get user from database (including password and verification status)
-  const [rows] = await db.query(
-    'SELECT * FROM patients WHERE phone_number = ?',
-    [phone_number]
-  );
-
-  if (rows.length === 0) {
-    return next(new AppError('Patient not found', 404));
-  }
-
-  const patient = rows[0];
-
-  // 3. Check if user exists and password is correct
-  if (
-    !patient ||
-    !(await bcrypt.compare(password_hash, patient.password_hash))
-  ) {
-    return next(new AppError('Incorrect email or password', 401));
-  }
-
-  // Remove password from the user object
-  patient.password_hash = undefined;
-
-  // 5. If everything is OK, send token
-  createSendToken(res, patient, 200);
-});
-
 // LOGOUT USER
 
 exports.logout = (req, res) => {
@@ -91,8 +29,7 @@ exports.logout = (req, res) => {
 // PROTECT ROUTES
 
 exports.protect = catchAsync(async (req, res, next) => {
-  // 01 geting token and check if its there in the headers
-
+  // 1️ Get token from headers or cookies
   let token;
   if (
     req.headers.authorization &&
@@ -103,30 +40,42 @@ exports.protect = catchAsync(async (req, res, next) => {
     token = req.cookies.gsghjwt;
   }
 
-  console.log(token);
-
   if (!token) return next(new AppError('You are not logged in', 401));
 
-  //   02 verify the token
+  // 2️ Verify token
   const decoded = await promisify(jwt.verify)(token, process.env.JWT_SECRET);
 
-  // 03 check of the user still exists
+  // 3️ Allowed login types with their ID fields
+  const allowedTables = {
+    patients: 'patient_id',
+    partner_organizations: 'partner_id'
+  };
 
-  const [rows] = await db.query('SELECT * FROM patients WHERE patient_id = ?', [
-    decoded.id
-  ]);
+  // 4️ Validate loginType
+  const tableName = decoded.loginType;
+  const idField = allowedTables[tableName];
+
+  if (!idField) {
+    return next(new AppError('Invalid login type', 401));
+  }
+
+  // 5️ Query correct table and ID column
+  const [rows] = await db.query(
+    `SELECT * FROM \`${tableName}\` WHERE \`${idField}\` = ?`,
+    [decoded.id]
+  );
 
   const currentUser = rows[0];
-
   if (!currentUser) {
     return next(new AppError('The user no longer exists', 401));
   }
 
+  // 6️ Attach to req
   req.user = currentUser;
+  req.loginType = tableName;
 
   next();
 });
-
 // RESTRICT ACTIONS
 
 exports.restrictTo = (...roles) => {

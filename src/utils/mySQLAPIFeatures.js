@@ -6,53 +6,31 @@ class MySQLAPIFeatures {
     this.whereClauses = [];
   }
 
-  // FILTERING BY STATUS AND REGION
+  // FILTERING BY VERIFICATION STATUS
   filter() {
-    const { status, region } = this.queryString;
+    const { verification_status } = this.queryString;
 
-    // Filter by status
-    if (status && status.toLowerCase() !== 'all') {
-      this.whereClauses.push('LOWER(status) = ?');
-      this.queryParams.push(status.toLowerCase());
-    }
-
-    // Filter by region
-    if (region && region.toLowerCase() !== 'all') {
-      this.whereClauses.push('LOWER(region) = ?');
-      this.queryParams.push(region.toLowerCase());
+    if (verification_status && verification_status.toLowerCase() !== 'all') {
+      this.whereClauses.push('LOWER(verification_status) = ?');
+      this.queryParams.push(verification_status.toLowerCase());
     }
 
     return this;
   }
 
-  // SEARCH BY MULTIPLE FIELDS
+  // SEARCH BY ORGANIZATION NAME, CITY, ORGANIZATION TYPE
   search(fields = []) {
     const { search } = this.queryString;
 
     if (search && fields.length > 0) {
       const searchConditions = fields
-        .map(field => {
-          // Handle JSON columns differently
-          if (
-            field === 'medical_services' ||
-            field === 'diagnostic_equipment'
-          ) {
-            return `JSON_SEARCH(${field}, 'one', ?) IS NOT NULL`;
-          } else {
-            return `LOWER(${field}) LIKE ?`;
-          }
-        })
+        .map(field => `LOWER(${field}) LIKE ?`)
         .join(' OR ');
 
       this.whereClauses.push(`(${searchConditions})`);
 
-      // Add a parameter for each searchable field
-      fields.forEach(field => {
-        if (field === 'medical_services' || field === 'diagnostic_equipment') {
-          this.queryParams.push(`%${search}%`);
-        } else {
-          this.queryParams.push(`%${search.toLowerCase()}%`);
-        }
+      fields.forEach(() => {
+        this.queryParams.push(`%${search.toLowerCase()}%`);
       });
     }
 
@@ -73,6 +51,7 @@ class MySQLAPIFeatures {
     } else {
       this.query += ' ORDER BY created_at DESC';
     }
+
     return this;
   }
 
@@ -86,17 +65,18 @@ class MySQLAPIFeatures {
 
     this.query += ' LIMIT ? OFFSET ?';
     this.queryParams.push(limit, offset);
+
     return this;
   }
 
-  // Helper: build WHERE clauses once
+  // BUILD WHERE CLAUSE ONCE
   buildWhereClause() {
     if (this.whereClauses.length > 0 && !this.query.includes(' WHERE ')) {
       this.query += ' WHERE ' + this.whereClauses.join(' AND ');
     }
   }
 
-  // Return final query
+  // FINAL OUTPUT
   build() {
     this.buildWhereClause();
     return { sql: this.query, params: this.queryParams };

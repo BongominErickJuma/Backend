@@ -57,6 +57,9 @@ CREATE TABLE partner_organizations (
     organization_type ENUM('hospital', 'clinic', 'pharmacy', 'diagnostic_center', 'ambulance_service', 'other') NOT NULL,
     registration_number VARCHAR(100) UNIQUE,
     tax_id VARCHAR(100),
+
+    -- Login Credentials
+    password VARCHAR(255) NOT NULL,
     
     -- Contact Information
     primary_email VARCHAR(100) UNIQUE NOT NULL,
