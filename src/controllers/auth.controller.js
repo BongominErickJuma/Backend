@@ -76,7 +76,8 @@ exports.protect = catchAsync(async (req, res, next) => {
 
   next();
 });
-// RESTRICT ACTIONS
+
+// RESTRICT ACTIONS NOT YET IMPLEMENTED
 
 exports.restrictTo = (...roles) => {
   return (req, res, next) => {
