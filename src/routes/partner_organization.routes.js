@@ -1,13 +1,18 @@
 const express = require('express');
 const orgController = require('../controllers/partner_organizations.controller');
+const loginAuthController = require('../controllers/auth/loginAuth.controller');
 const authController = require('../controllers/auth.controller');
 const partnerUserRoutes = require('./partner_user.routes');
 
 const router = express.Router();
 
 router.post('/', orgController.addOrganization);
-router.post('/login', orgController.loginOrg);
+router.post('/login', loginAuthController.loginOrg);
 router.get('/logout', authController.logout);
+
+// Login Organization Users
+
+router.post('/login/users', loginAuthController.loginPartnerUser);
 
 router.use(authController.protect);
 
@@ -16,7 +21,7 @@ router.use(authController.protect);
 router.use('/users', partnerUserRoutes);
 router.use('/:orgId/users', partnerUserRoutes);
 
-router.post('changePassword', orgController.changeOrgPassword);
+// router.post('changePassword', orgController.changeOrgPassword);
 
 router.route('/').get(orgController.getAllOrganizations);
 

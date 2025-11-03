@@ -3,7 +3,6 @@ const db = require('../config/db.config');
 const catchAsync = require('../utils/catchAsync');
 const AppError = require('../utils/appError');
 const MySQLAPIFeatures = require('../utils/mySQLAPIFeatures');
-const createSendToken = require('../utils/createSendToken ');
 
 const {
   allowedOrganizationFields,
@@ -175,84 +174,5 @@ exports.deleteOrganization = catchAsync(async (req, res, next) => {
   res.status(204).json({
     status: 'success',
     message: 'Organization deleted successfully'
-  });
-});
-
-exports.loginOrg = catchAsync(async (req, res, next) => {
-  const { primary_email: email, password } = req.body;
-
-  // 1. Check if email and password exist
-  if (!password || !email) {
-    return next(new AppError('Please provide Email and password', 400));
-  }
-
-  const [rows] = await db.query(
-    'SELECT * FROM partner_organizations WHERE primary_email = ?',
-    [email.trim()]
-  );
-
-  if (rows.length === 0) {
-    return next(new AppError('Organization not found', 404));
-  }
-
-  const org = rows[0];
-
-  // 3. Check if user exists and password is correct
-  if (!org || !(await bcrypt.compare(password, org.password))) {
-    return next(new AppError('Incorrect email or password', 401));
-  }
-
-  // Remove password from the user object
-  org.password = undefined;
-
-  // 5. If everything is OK, send token
-  createSendToken(res, org, org.partner_id, 'partner_organizations', 200);
-});
-
-exports.changeOrgPassword = catchAsync(async (req, res, next) => {
-  const { id } = req.params;
-  const { current_password, new_password, confirm_password } = req.body;
-
-  // Simple validation
-  if (!current_password || !new_password || !confirm_password) {
-    return next(
-      new AppError(
-        'Current password, new password and confirm password are all required',
-        400
-      )
-    );
-  }
-
-  if (new_password !== confirm_password) {
-    return next(
-      new AppError('New password and confirmation do not match', 400)
-    );
-  }
-
-  // Get current organization
-  const [org] = await db.query(
-    'SELECT password FROM partner_organizations WHERE partner_id = ?',
-    [id]
-  );
-  if (org.length === 0) {
-    return next(new AppError('Organization not found', 404));
-  }
-
-  // Verify current password
-  const isMatch = await bcrypt.compare(current_password, org[0].password);
-  if (!isMatch) {
-    return next(new AppError('Current password is incorrect', 401));
-  }
-
-  // Hash new password and update
-  const hashedPassword = await bcrypt.hash(new_password, 12);
-  await db.query(
-    'UPDATE partner_organizations SET password = ?, updated_at = CURRENT_TIMESTAMP WHERE partner_id = ?',
-    [hashedPassword, id]
-  );
-
-  res.status(200).json({
-    status: 'success',
-    message: 'Password updated successfully'
   });
 });

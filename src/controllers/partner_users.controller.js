@@ -39,6 +39,8 @@ exports.addPartnerUser = catchAsync(async (req, res, next) => {
   //   data.parthner_id
   data.partner_id = req.user.partner_id; // Assuming req.user contains the authenticated user's info
 
+  console.log('Adding Partner User with data:', data);
+
   data.password_hash = await bcrypt.hash(data.password_hash, 12);
 
   const [result] = await db.query('INSERT INTO partner_users SET ?', [data]);
