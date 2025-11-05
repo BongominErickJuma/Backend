@@ -57,4 +57,36 @@ exports.loginPartnerUser = catchAsync(async (req, res, next) => {
 
 // login Delivery Riders
 
+exports.loginRider = catchAsync(async (req, res, next) => {
+  await loginUser({
+    table: 'delivery_riders',
+    identifierField: 'phone_number',
+    identifierValue: req.body.phone_number,
+    passwordField: 'password_hash',
+    passwordValue: req.body.password_hash,
+    idField: 'rider_id',
+    tokenTable: 'delivery_riders',
+    res,
+    next,
+    notFoundMsg: 'Delivery rider not found',
+    invalidMsg: 'Incorrect phone number or password'
+  });
+});
+
 // login Admins
+
+exports.loginAdmin = catchAsync(async (req, res, next) => {
+  await loginUser({
+    table: 'super_administrators',
+    identifierField: 'email',
+    identifierValue: req.body.email,
+    passwordField: 'password_hash',
+    passwordValue: req.body.password_hash,
+    idField: 'admin_id',
+    tokenTable: 'super_administrators',
+    res,
+    next,
+    notFoundMsg: 'Admin not found',
+    invalidMsg: 'Incorrect email or password'
+  });
+});

@@ -39,8 +39,6 @@ exports.protect = catchAsync(async (req, res, next) => {
   // 2️ Verify token
   const decoded = await promisify(jwt.verify)(token, process.env.JWT_SECRET);
 
-  console.log('Decoded JWT:', decoded);
-
   // 3️ Allowed login types with their ID fields
   const allowedTables = {
     patients: 'patient_id',

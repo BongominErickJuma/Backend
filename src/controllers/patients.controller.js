@@ -38,20 +38,28 @@ exports.updatePatient = catchAsync(async (req, res, next) => {
   const { id } = req.params;
   const data = req.body;
 
+  // Check if patient exists
+  const [existingPatient] = await db.query(
+    'SELECT * FROM patients WHERE patient_id = ?',
+    [id]
+  );
+
+  if (existingPatient.length === 0) {
+    return next(new AppError('Patient not found', 404));
+  }
+
+  // Update
+  await db.query('UPDATE patients SET ? WHERE patient_id = ?', [data, id]);
+
+  // Fetch updated patient
   const [updatedPatient] = await db.query(
     'SELECT * FROM patients WHERE patient_id = ?',
     [id]
   );
 
-  if (updatedPatient.length === 0) {
-    return next(new AppError('Patient not found', 404));
-  }
-
-  await db.query('UPDATE patients SET ? WHERE patient_id = ?', [data, id]);
-
   res.status(200).json({
     status: 'success',
-    data: { patient: updatedPatient }
+    data: { patient: updatedPatient[0] }
   });
 });
 

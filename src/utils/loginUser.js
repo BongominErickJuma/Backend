@@ -43,7 +43,6 @@ const loginUser = async ({
 
   // 4. Remove password before sending
   delete user[passwordField];
-  console.log('User authenticated:', user[idField]);
   // 5. Create and send token
   createSendToken(res, user, user[idField], tokenTable, 200);
 };

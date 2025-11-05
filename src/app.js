@@ -1,18 +1,48 @@
 const express = require('express');
 const cookieParser = require('cookie-parser');
+const cors = require('cors');
 const AppError = require('./utils/appError');
 const globalErrorHandler = require('./controllers/error.controller');
 const partnerOrganizationRoutes = require('./routes/partner_organization.routes');
 const patientRoutes = require('./routes/patient.routes');
+const adminRoutes = require('./routes/admin.routes');
 const app = express();
 
-// Import hospital routes
+// const allowedOrigins = [
+//   'http://127.0.0.1:5500',
+//   'https://goodshepherd.health/'
+// ];
+
+// app.use(
+//   cors({
+//     origin: function (origin, callback) {
+//       // Allow requests with no origin (like curl or postman)
+//       if (!origin) return callback(null, true);
+//       if (allowedOrigins.includes(origin)) {
+//         return callback(null, true);
+//       } else {
+//         return callback(new Error('Not allowed by CORS'));
+//       }
+//     },
+//     credentials: true
+//   })
+// );
+
+app.use(
+  cors({
+    origin: (origin, callback) => {
+      callback(null, true);
+    },
+    credentials: true
+  })
+);
 
 app.set('query parser', 'extended');
 
 app.use(express.json());
 app.use(cookieParser());
 
+app.use('/gsgh/api/admins', adminRoutes);
 app.use('/gsgh/api/organizations', partnerOrganizationRoutes);
 app.use('/gsgh/api/patients', patientRoutes);
 
