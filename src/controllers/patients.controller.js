@@ -34,6 +34,52 @@ exports.getOnePatient = catchAsync(async (req, res, next) => {
   });
 });
 
+exports.getMe = catchAsync(async (req, res, next) => {
+  const [rows] = await db.query(
+    `
+    SELECT 
+      phone_number,
+      full_name,
+      date_of_birth,
+      age,
+      gender,
+      blood_group,
+      email,
+      emergency_contact_name,
+      emergency_contact_phone,
+      emergency_contact_relationship,
+      location_address,
+      city,
+      state_province,
+      postal_code,
+      country,
+      default_latitude,
+      default_longitude,
+      profile_picture_url,
+      allergies,
+      chronic_conditions,
+      current_medications,
+      medical_notes,
+      preferred_language,
+      notification_preferences
+    FROM patients
+    WHERE patient_id = ? AND is_active = TRUE
+    `,
+    [req.user.patient_id]
+  );
+
+  const user = rows[0];
+
+  if (!user) {
+    return next(new AppError('Your account no longer exists', 404));
+  }
+
+  res.status(200).json({
+    status: 'success',
+    data: user
+  });
+});
+
 exports.updatePatient = catchAsync(async (req, res, next) => {
   const { id } = req.params;
   const data = req.body;
