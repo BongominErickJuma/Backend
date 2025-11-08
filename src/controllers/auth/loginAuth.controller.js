@@ -6,8 +6,8 @@ const loginUser = require('../../utils/loginUser');
 exports.loginOrg = catchAsync(async (req, res, next) => {
   await loginUser({
     table: 'partner_organizations',
-    identifierField: 'primary_email',
-    identifierValue: req.body.primary_email,
+    identifierField: 'facility_email',
+    identifierValue: req.body.facility_email,
     passwordField: 'password',
     passwordValue: req.body.password,
     idField: 'partner_id',

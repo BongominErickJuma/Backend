@@ -125,7 +125,7 @@ exports.addOrganization = catchAsync(async (req, res, next) => {
 
   // 3. Handle password hashing
   // The API can accept either `password` or `contact_password_hash` (raw password)
-  let rawPassword = data.password || data.contact_password_hash;
+  let rawPassword = data.password || data.password;
 
   if (!rawPassword) {
     return next(
@@ -153,7 +153,7 @@ exports.addOrganization = catchAsync(async (req, res, next) => {
   );
 
   // Remove password hash before responding
-  delete newOrg[0].contact_password_hash;
+  delete newOrg[0].password;
 
   res.status(201).json({
     status: 'success',
@@ -203,7 +203,7 @@ exports.updateOrganization = catchAsync(async (req, res, next) => {
     [id]
   );
 
-  delete updatedOrg[0].contact_password_hash;
+  delete updatedOrg[0].password;
 
   res.status(200).json({
     status: 'success',

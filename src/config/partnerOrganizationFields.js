@@ -31,7 +31,7 @@ exports.allowedOrganizationFields = [
   'contact_phone',
   'contact_alt_phone',
   'contact_nin',
-  'contact_password_hash',
+  'password',
   'contact_is_confirmed',
 
   // Services & specialization

@@ -5,7 +5,7 @@ exports.sanitizeOrganization = org => {
 
   const {
     // Authentication fields
-    contact_password_hash,
+    password,
     ...safe
   } = org;
 
