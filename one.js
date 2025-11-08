@@ -1,55 +1,46 @@
-const {
-  allowedOrganizationFields,
-  requiredFields
-} = require('../config/partnerOrganizationFields');
-const {
-  processFieldValue,
-  validateRequiredFields
-} = require('../utils/fieldProcessor');
+const { sanitizeOrganization } = require('../utils/sanitizeOrganization');
+const catchAsync = require('../utils/catchAsync');
+const AppError = require('../utils/appError');
+const db = require('../config/db');
+const MySQLAPIFeatures = require('../utils/mysqlAPIFeatures');
 
-exports.addHospital = catchAsync(async (req, res, next) => {
-  const data = req.body;
+exports.getAllOrganizations = catchAsync(async (req, res, next) => {
+  const baseQuery = 'SELECT * FROM partner_organizations';
 
-  try {
-    validateRequiredFields(data, requiredFields);
-  } catch (error) {
-    return next(new AppError(error.message, 400));
-  }
+  const features = new MySQLAPIFeatures(baseQuery, req.query)
+    .filter()
+    .search(['organization_name', 'city', 'organization_type'])
+    .sort()
+    .paginate();
 
-  // Hash password
-  const hashedPassword = await bcrypt.hash(data.password, 12);
+  const builtQuery = features.build();
+  const [organizations] = await db.query(builtQuery.sql, builtQuery.params);
 
-  // Filter and process data
-  const filteredData = filterAllowedFields(data, allowedOrganizationFields);
+  // Sanitize all results
+  const sanitized = organizations.map(sanitizeOrganization);
 
-  // Build query dynamically
-  const fields = [...allowedOrganizationFields, 'password']; // Add password separately
-  const placeholders = fields.map(() => '?').join(',');
-
-  const query = `INSERT INTO partner_organizations (${fields.join(', ')}) VALUES (${placeholders})`;
-
-  // Prepare values
-  const values = fields.map(field => {
-    if (field === 'password') return hashedPassword;
-    return processFieldValue(field, filteredData[field] || null);
+  res.status(200).json({
+    status: 'success',
+    results: sanitized.length,
+    organizations: sanitized
   });
+});
 
-  // Insert organization
-  const [result] = await db.query(query, values);
-
-  // Fetch newly added record (without password)
-  const [newOrg] = await db.query(
+exports.getOneOrganization = catchAsync(async (req, res, next) => {
+  const { id } = req.params;
+  const [rows] = await db.query(
     'SELECT * FROM partner_organizations WHERE partner_id = ?',
-    [result.insertId]
+    [id]
   );
 
-  // Remove password from response
-  const organization = { ...newOrg[0] };
-  delete organization.password;
+  if (rows.length === 0) {
+    return next(new AppError('Organization not found', 404));
+  }
 
-  res.status(201).json({
+  const organization = sanitizeOrganization(rows[0]);
+
+  res.status(200).json({
     status: 'success',
-    message: 'Organization added successfully',
     organization
   });
 });

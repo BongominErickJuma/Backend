@@ -1,35 +1,93 @@
+const multer = require('multer');
+const sharp = require('sharp');
 const bcrypt = require('bcryptjs');
 const db = require('../config/db.config');
 const catchAsync = require('../utils/catchAsync');
 const AppError = require('../utils/appError');
 const MySQLAPIFeatures = require('../utils/mySQLAPIFeatures');
+const { sanitizeOrganization } = require('../utils/sanitizeOrganization');
 
 const {
   allowedOrganizationFields,
-  requiredFields
-} = require('../config/partnerOrganizationFields');
-const {
-  processFieldValue,
+  requiredFields,
+  filterAllowedFields,
   validateRequiredFields,
-  filterAllowedFields
-} = require('../utils/fieldProcessor');
+  processFieldValue
+} = require('../config/partnerOrganizationFields');
+
+const multerStorage = multer.memoryStorage();
+
+const multerFilter = (req, file, cb) => {
+  if (file.mimetype.startsWith('image')) {
+    cb(null, true);
+  } else {
+    cb(new AppError('Not an image! Please upload only images.', 400), false);
+  }
+};
+
+const upload = multer({
+  storage: multerStorage,
+  fileFilter: multerFilter
+});
+
+exports.uploadVerificationDocuments = upload.fields([
+  { name: 'imageCover', maxCount: 1 },
+  { name: 'images', maxCount: 3 }
+]);
+
+// upload.single('image') req.file
+// upload.array('images', 5) req.files
+
+exports.resizeVerificationDocuments = catchAsync(async (req, res, next) => {
+  if (!req.files.imageCover || !req.files.images) return next();
+
+  // 1) Cover image
+  req.body.imageCover = `tour-${req.params.id}-${Date.now()}-cover.jpeg`;
+  await sharp(req.files.imageCover[0].buffer)
+    .resize(2000, 1333)
+    .toFormat('jpeg')
+    .jpeg({ quality: 90 })
+    .toFile(`public/img/tours/${req.body.imageCover}`);
+
+  // 2) Images
+  req.body.images = [];
+
+  await Promise.all(
+    req.files.images.map(async (file, i) => {
+      const filename = `tour-${req.params.id}-${Date.now()}-${i + 1}.jpeg`;
+
+      await sharp(file.buffer)
+        .resize(2000, 1333)
+        .toFormat('jpeg')
+        .jpeg({ quality: 90 })
+        .toFile(`public/img/tours/${filename}`);
+
+      req.body.images.push(filename);
+    })
+  );
+
+  next();
+});
 
 exports.getAllOrganizations = catchAsync(async (req, res, next) => {
   const baseQuery = 'SELECT * FROM partner_organizations';
 
   const features = new MySQLAPIFeatures(baseQuery, req.query)
-    .filter() // now filters by verification_status
-    .search(['organization_name', 'city', 'organization_type']) // updated fields
+    .filter()
+    .search(['organization_name', 'city', 'organization_type'])
     .sort()
     .paginate();
 
   const builtQuery = features.build();
   const [organizations] = await db.query(builtQuery.sql, builtQuery.params);
 
+  // Sanitize all results
+  const sanitized = organizations.map(sanitizeOrganization);
+
   res.status(200).json({
     status: 'success',
-    results: organizations.length,
-    organizations
+    results: sanitized.length,
+    organizations: sanitized
   });
 });
 
@@ -43,7 +101,8 @@ exports.getOneOrganization = catchAsync(async (req, res, next) => {
   if (rows.length === 0) {
     return next(new AppError('Organization not found', 404));
   }
-  const organization = rows[0];
+
+  const organization = sanitizeOrganization(rows[0]);
 
   res.status(200).json({
     status: 'success',
@@ -54,47 +113,52 @@ exports.getOneOrganization = catchAsync(async (req, res, next) => {
 exports.addOrganization = catchAsync(async (req, res, next) => {
   const data = req.body;
 
+  // 1. Validate required fields
   try {
     validateRequiredFields(data, requiredFields);
   } catch (error) {
     return next(new AppError(error.message, 400));
   }
 
-  // Hash password
-  const hashedPassword = await bcrypt.hash(data.password, 12);
-
-  // Filter and process data
+  // 2. Filter out unwanted fields
   const filteredData = filterAllowedFields(data, allowedOrganizationFields);
 
-  // Build query dynamically
-  const fields = [...allowedOrganizationFields, 'password']; // Add password separately
+  // 3. Handle password hashing
+  // The API can accept either `password` or `contact_password_hash` (raw password)
+  let rawPassword = data.password || data.contact_password_hash;
+
+  if (!rawPassword) {
+    return next(
+      new AppError('Password is required for organization contact', 400)
+    );
+  }
+
+  const hashedPassword = await bcrypt.hash(rawPassword, 12);
+  filteredData.contact_password_hash = hashedPassword;
+
+  // 4. Prepare dynamic insert query
+  const fields = Object.keys(filteredData);
   const placeholders = fields.map(() => '?').join(',');
+  const values = fields.map(f => processFieldValue(f, filteredData[f]));
 
   const query = `INSERT INTO partner_organizations (${fields.join(', ')}) VALUES (${placeholders})`;
 
-  // Prepare values
-  const values = fields.map(field => {
-    if (field === 'password') return hashedPassword;
-    return processFieldValue(field, filteredData[field] || null);
-  });
-
-  // Insert organization
+  // 5. Execute insert
   const [result] = await db.query(query, values);
 
-  // Fetch newly added record (without password)
+  // 6. Fetch and return the new record
   const [newOrg] = await db.query(
     'SELECT * FROM partner_organizations WHERE partner_id = ?',
     [result.insertId]
   );
 
-  // Remove password from response
-  const organization = { ...newOrg[0] };
-  delete organization.password;
+  // Remove password hash before responding
+  delete newOrg[0].contact_password_hash;
 
   res.status(201).json({
     status: 'success',
     message: 'Organization added successfully',
-    organization
+    organization: newOrg[0]
   });
 });
 
@@ -102,7 +166,6 @@ exports.updateOrganization = catchAsync(async (req, res, next) => {
   const { id } = req.params;
   const updates = req.body;
 
-  // Check if organization exists
   const [exists] = await db.query(
     'SELECT * FROM partner_organizations WHERE partner_id = ?',
     [id]
@@ -111,48 +174,41 @@ exports.updateOrganization = catchAsync(async (req, res, next) => {
     return next(new AppError('Organization not found', 404));
   }
 
-  // Filter valid updates
   const filteredUpdates = filterAllowedFields(
     updates,
     allowedOrganizationFields
   );
-
   if (Object.keys(filteredUpdates).length === 0) {
     return next(new AppError('No valid fields provided for update', 400));
   }
 
-  // Build dynamic query
   const fields = [];
   const values = [];
 
-  Object.keys(filteredUpdates).forEach(key => {
+  for (const key in filteredUpdates) {
     const processedValue = processFieldValue(key, filteredUpdates[key]);
     fields.push(`${key} = ?`);
     values.push(processedValue);
-  });
+  }
 
-  // Add updated_at timestamp
   fields.push('updated_at = CURRENT_TIMESTAMP');
+  values.push(id);
 
   const query = `UPDATE partner_organizations SET ${fields.join(', ')} WHERE partner_id = ?`;
-  values.push(id);
 
   await db.query(query, values);
 
-  // Fetch updated organization (without password)
   const [updatedOrg] = await db.query(
     'SELECT * FROM partner_organizations WHERE partner_id = ?',
     [id]
   );
 
-  // Remove password from response
-  const organization = { ...updatedOrg[0] };
-  delete organization.password;
+  delete updatedOrg[0].contact_password_hash;
 
   res.status(200).json({
     status: 'success',
     message: 'Organization updated successfully',
-    organization
+    organization: updatedOrg[0]
   });
 });
 
