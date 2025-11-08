@@ -66,7 +66,8 @@ exports.requiredFields = [
   'facility_name',
   'facility_type',
   'facility_phone',
-  'facility_email'
+  'facility_email',
+  'password'
 ];
 
 /**
@@ -98,10 +99,6 @@ exports.validateRequiredFields = (data, requiredFields) => {
 const isValidYear = val => /^\d{4}$/.test(val);
 const isValidTime = val => /^([01]\d|2[0-3]):([0-5]\d)$/.test(val);
 const isValidEmail = val => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(val);
-const isValidURL = val =>
-  /^(https?:\/\/)?([\w\-]+\.)+[\w\-]+(\/[\w\-._~:/?#[\]@!$&'()*+,;=]*)?$/.test(
-    val
-  );
 
 /**
  * Smart value processor — validates and typecasts before DB insert/update
@@ -128,15 +125,6 @@ exports.processFieldValue = (key, value) => {
     case 'facility_email':
     case 'contact_personal_email':
       return isValidEmail(value) ? value.trim() : null;
-
-    case 'website':
-    case 'registration_cert_url':
-    case 'license_url':
-    case 'tin_cert_url':
-    case 'contact_id_url':
-    case 'authorization_letter_url':
-    case 'logo_url':
-      return isValidURL(value) ? value.trim() : null;
 
     case 'operates_24_7':
     case 'is_verified':

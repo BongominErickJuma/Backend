@@ -3,10 +3,18 @@ const orgController = require('../controllers/partner_organizations.controller')
 const loginAuthController = require('../controllers/auth/loginAuth.controller');
 const authController = require('../controllers/auth.controller');
 const partnerUserRoutes = require('./partner_user.routes');
-
+const {
+  uploadVerificationDocuments,
+  resizeVerificationDocuments
+} = require('../middlewares/uploadOrganizationDocuments');
 const router = express.Router();
 
-router.post('/', orgController.addOrganization);
+router.post(
+  '/',
+  uploadVerificationDocuments,
+  resizeVerificationDocuments,
+  orgController.addOrganization
+);
 router.post('/login', loginAuthController.loginOrg);
 router.get('/logout', authController.logout);
 
@@ -29,6 +37,10 @@ router
   .route('/:id')
   .get(orgController.getOneOrganization)
   .delete(orgController.deleteOrganization)
-  .patch(orgController.updateOrganization);
+  .patch(
+    uploadVerificationDocuments,
+    resizeVerificationDocuments,
+    orgController.updateOrganization
+  );
 
 module.exports = router;

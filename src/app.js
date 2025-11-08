@@ -1,5 +1,6 @@
 const express = require('express');
 const cookieParser = require('cookie-parser');
+const path = require('path');
 const cors = require('cors');
 const AppError = require('./utils/appError');
 const globalErrorHandler = require('./controllers/error.controller');
@@ -41,6 +42,10 @@ app.set('query parser', 'extended');
 
 app.use(express.json());
 app.use(cookieParser());
+// app.use(express.static(path.join(__dirname, 'public')));
+if (process.env.NODE_ENV !== 'production') {
+  app.use('/temp', express.static(path.join(__dirname, 'public/temp')));
+}
 
 app.use('/gsgh/api/admins', adminRoutes);
 app.use('/gsgh/api/organizations', partnerOrganizationRoutes);
