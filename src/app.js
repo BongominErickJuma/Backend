@@ -5,6 +5,7 @@ const cors = require('cors');
 const AppError = require('./utils/appError');
 const globalErrorHandler = require('./controllers/error.controller');
 const partnerOrganizationRoutes = require('./routes/partner_organization.routes');
+const deliveryRiderRoutes = require('./routes/rider.routes');
 const patientRoutes = require('./routes/patient.routes');
 const adminRoutes = require('./routes/admin.routes');
 const app = express();
@@ -50,6 +51,7 @@ if (process.env.NODE_ENV !== 'production') {
 app.use('/gsgh/api/admins', adminRoutes);
 app.use('/gsgh/api/organizations', partnerOrganizationRoutes);
 app.use('/gsgh/api/patients', patientRoutes);
+app.use('/gsgh/api/riders', deliveryRiderRoutes);
 
 app.all('/*', (req, res, next) => {
   next(

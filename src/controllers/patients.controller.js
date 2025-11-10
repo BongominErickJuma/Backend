@@ -1,7 +1,6 @@
 const db = require('../config/db.config');
 const catchAsync = require('../utils/catchAsync');
 const AppError = require('../utils/appError');
-const createSendToken = require('../utils/createSendToken ');
 const bcrypt = require('bcryptjs');
 
 exports.getAllPatients = catchAsync(async (req, res, next) => {

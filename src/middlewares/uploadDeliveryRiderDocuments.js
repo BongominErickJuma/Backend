@@ -5,9 +5,9 @@ const AppError = require('../utils/appError');
 const catchAsync = require('../utils/catchAsync');
 
 // Base directories and URLs
-const uploadDir = '/home/cognosp1/upload.goodshepherd.health/organizations';
+const uploadDir = '/home/cognosp1/upload.goodshepherd.health/delivery_riders';
 
-const baseUrl = 'https://upload.goodshepherd.health/organizations/';
+const baseUrl = 'https://upload.goodshepherd.health/delivery_riders/';
 
 // Ensure the upload folder exists (safe for both environments)
 if (!fs.existsSync(uploadDir)) {
@@ -48,14 +48,15 @@ const upload = multer({
   limits: { fileSize: 5 * 1024 * 1024 } // 5MB limit
 });
 
+//   'front_view',
+//   'side_view',
+//   'back_view'
 // 4. Fields
 exports.uploadVerificationDocuments = upload.fields([
-  { name: 'registration_cert_url', maxCount: 1 },
-  { name: 'license_url', maxCount: 1 },
-  { name: 'tin_cert_url', maxCount: 1 },
-  { name: 'contact_id_url', maxCount: 1 },
-  { name: 'authorization_letter_url', maxCount: 1 },
-  { name: 'logo_url', maxCount: 1 }
+  { name: 'front_view', maxCount: 1 },
+  { name: 'side_view', maxCount: 1 },
+  { name: 'back_view', maxCount: 1 },
+  { name: 'profile_picture_url', maxCount: 1 }
 ]);
 
 // 5. Attach URLs to req.body
@@ -69,14 +70,9 @@ exports.resizeVerificationDocuments = catchAsync(async (req, res, next) => {
       uploadedUrls[field] = baseUrl + req.files[field][0].filename;
   };
 
-  [
-    'registration_cert_url',
-    'license_url',
-    'tin_cert_url',
-    'contact_id_url',
-    'authorization_letter_url',
-    'logo_url'
-  ].forEach(mapField);
+  ['front_view', 'side_view', 'back_view', 'profile_picture_url'].forEach(
+    mapField
+  );
 
   req.body = { ...req.body, ...uploadedUrls };
 
