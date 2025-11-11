@@ -42,7 +42,8 @@ exports.protect = catchAsync(async (req, res, next) => {
   // 3️ Allowed login types with their ID fields
   const allowedTables = {
     patients: 'patient_id',
-    partner_organizations: 'partner_id'
+    partner_organizations: 'partner_id',
+    super_administrators: 'admin_id'
   };
 
   // 4️ Validate loginType
