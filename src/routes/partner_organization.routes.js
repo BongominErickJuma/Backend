@@ -17,6 +17,7 @@ router.post(
 );
 router.post('/login', loginAuthController.loginOrg);
 router.get('/logout', authController.logout);
+router.get('/partners', orgController.getPartners);
 
 // Login Organization Users
 

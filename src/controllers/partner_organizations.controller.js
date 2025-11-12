@@ -54,6 +54,29 @@ exports.getOneOrganization = catchAsync(async (req, res, next) => {
   });
 });
 
+exports.getPartners = catchAsync(async (req, res, next) => {
+  // Fetch verified organizations
+  const [rows] = await db.query(
+    `SELECT facility_name, year_established, town_city, district, logo_url, brief_description
+     FROM partner_organizations
+     WHERE is_verified = TRUE
+     ORDER BY year_established DESC`
+  );
+
+  // Split into featured and all partners
+  const featured = rows.slice(0, 3); // first 3 with description
+  const partners = rows.map(({ brief_description, ...rest }) => rest); // remove description for all
+
+  res.status(200).json({
+    status: 'success',
+    total: rows.length,
+    featuredCount: featured.length,
+    partnersCount: partners.length,
+    featured,
+    partners
+  });
+});
+
 exports.addOrganization = catchAsync(async (req, res, next) => {
   const data = req.body;
 

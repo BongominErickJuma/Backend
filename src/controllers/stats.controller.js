@@ -12,7 +12,7 @@ exports.getSuperAdminStats = async (req, res) => {
     ] = await Promise.all([
       db.query('SELECT COUNT(*) AS total FROM partner_organizations'),
       db.query(
-        'SELECT COUNT(*) AS total FROM partner_organizations WHERE is_active = TRUE'
+        'SELECT COUNT(*) AS total FROM partner_organizations WHERE is_verified = TRUE'
       ),
       db.query('SELECT COUNT(*) AS total FROM delivery_riders'),
       db.query(
