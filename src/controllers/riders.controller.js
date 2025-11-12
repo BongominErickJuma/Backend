@@ -69,6 +69,21 @@ exports.addRider = catchAsync(async (req, res, next) => {
   const hashedPassword = await bcrypt.hash(rawPassword, 12);
   filteredData.password = hashedPassword;
 
+  // Determine who is creating this rider
+  if (req.user.admin_id) {
+    // Super admin or system admin creating
+    filteredData.created_by_type = 'admin';
+    filteredData.created_by_id = req.user.admin_id;
+  } else if (req.user.partner_id) {
+    // Partner organization creating
+    filteredData.created_by_type = 'organization';
+    filteredData.created_by_id = req.user.partner_id;
+  } else {
+    // Self-registration (rider creating their own account)
+    filteredData.created_by_type = 'self';
+    filteredData.created_by_id = null;
+  }
+
   // 4. Prepare dynamic insert query
   const fields = Object.keys(filteredData);
   const placeholders = fields.map(() => '?').join(',');

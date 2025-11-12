@@ -8,6 +8,7 @@ const partnerOrganizationRoutes = require('./routes/partner_organization.routes'
 const deliveryRiderRoutes = require('./routes/rider.routes');
 const patientRoutes = require('./routes/patient.routes');
 const adminRoutes = require('./routes/admin.routes');
+const statRoutes = require('./routes/stat.routes');
 const app = express();
 
 // const allowedOrigins = [
@@ -52,6 +53,7 @@ app.use('/gsgh/api/admins', adminRoutes);
 app.use('/gsgh/api/organizations', partnerOrganizationRoutes);
 app.use('/gsgh/api/patients', patientRoutes);
 app.use('/gsgh/api/riders', deliveryRiderRoutes);
+app.use('/gsgh/api/stats', statRoutes);
 
 app.all('/*', (req, res, next) => {
   next(

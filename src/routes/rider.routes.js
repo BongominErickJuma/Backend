@@ -10,18 +10,19 @@ const {
 
 const router = express.Router();
 
-router.post(
-  '/',
-  uploadVerificationDocuments,
-  resizeVerificationDocuments,
-  riderController.addRider
-);
 router.post('/login', loginAuthController.loginRider);
 router.get('/logout', authController.logout);
 
 router.use(authController.protect);
 
-router.route('/').get(riderController.getDeliveryRiders);
+router
+  .route('/')
+  .get(riderController.getDeliveryRiders)
+  .post(
+    uploadVerificationDocuments,
+    resizeVerificationDocuments,
+    riderController.addRider
+  );
 
 router
   .route('/:id')

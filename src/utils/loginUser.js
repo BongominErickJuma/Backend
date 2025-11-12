@@ -35,6 +35,16 @@ const loginUser = async ({
 
   const user = rows[0];
 
+  // 3. Check verification for partner_organizations
+  if (table === 'partner_organizations' && !user.is_verified) {
+    return next(
+      new AppError(
+        'Your account has not been verified yet. Please wait for approval.',
+        403
+      )
+    );
+  }
+
   // 3. Compare passwords
   const isMatch = await bcrypt.compare(passwordValue, user[passwordField]);
   if (!isMatch) {
@@ -44,6 +54,7 @@ const loginUser = async ({
   // 4. Remove password before sending
   delete user[passwordField];
   // 5. Create and send token
+
   createSendToken(res, user, user[idField], tokenTable, 200);
 };
 
