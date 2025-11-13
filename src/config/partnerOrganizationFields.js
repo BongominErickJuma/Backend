@@ -19,7 +19,7 @@ exports.allowedOrganizationFields = [
   'opening_hour',
   'closing_hour',
   'operates_24_7',
-  'is_verified',
+  'verification_status',
   'verified_by',
 
   // Contact Person
@@ -127,7 +127,6 @@ exports.processFieldValue = (key, value) => {
       return isValidEmail(value) ? value.trim() : null;
 
     case 'operates_24_7':
-    case 'is_verified':
     case 'contact_is_confirmed':
     case 'ambulance_services':
     case 'has_agreed_terms_and_conditions':

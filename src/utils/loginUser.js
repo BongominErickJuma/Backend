@@ -36,7 +36,10 @@ const loginUser = async ({
   const user = rows[0];
 
   // 3. Check verification for partner_organizations
-  if (table === 'partner_organizations' && !user.is_verified) {
+  if (
+    table === 'partner_organizations' &&
+    !user.verification_status === 'verified'
+  ) {
     return next(
       new AppError(
         'Your account has not been verified yet. Please wait for approval.',

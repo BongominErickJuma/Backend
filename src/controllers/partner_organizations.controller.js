@@ -14,11 +14,25 @@ const {
 } = require('../config/partnerOrganizationFields');
 
 exports.getAllOrganizations = catchAsync(async (req, res, next) => {
-  const baseQuery = 'SELECT * FROM partner_organizations';
+  const baseQuery = `
+    SELECT 
+      partner_id,
+      facility_type,
+      created_at,
+      facility_name,
+      physical_address,
+      town_city,
+      district,
+      contact_first_name,
+      contact_last_name,
+      contact_phone,
+      verification_status
+    FROM partner_organizations
+  `;
 
   const features = new MySQLAPIFeatures(baseQuery, req.query)
     .filter()
-    .search(['organization_name', 'city', 'organization_type'])
+    .search(['facility_name', 'town_city', 'district']) // Updated search fields to match selected columns
     .sort()
     .paginate();
 
@@ -34,7 +48,6 @@ exports.getAllOrganizations = catchAsync(async (req, res, next) => {
     organizations: sanitized
   });
 });
-
 exports.getOneOrganization = catchAsync(async (req, res, next) => {
   const { id } = req.params;
   const [rows] = await db.query(
@@ -59,7 +72,7 @@ exports.getPartners = catchAsync(async (req, res, next) => {
   const [rows] = await db.query(
     `SELECT facility_name, year_established, town_city, district, logo_url, brief_description
      FROM partner_organizations
-     WHERE is_verified = TRUE
+     WHERE verification_status = "verified"
      ORDER BY year_established DESC`
   );
 
