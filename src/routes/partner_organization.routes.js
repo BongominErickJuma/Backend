@@ -3,6 +3,7 @@ const orgController = require('../controllers/partner_organizations.controller')
 const loginAuthController = require('../controllers/auth/loginAuth.controller');
 const authController = require('../controllers/auth.controller');
 const partnerUserRoutes = require('./partner_user.routes');
+const inventoryRoutes = require('./inventory.route');
 const {
   uploadVerificationDocuments,
   resizeVerificationDocuments
@@ -29,6 +30,11 @@ router.use(authController.protect);
 
 router.use('/users', partnerUserRoutes);
 router.use('/:orgId/users', partnerUserRoutes);
+
+// Partner Inventories
+
+router.use('/inventories', inventoryRoutes);
+router.use('/:orgId/inventories', inventoryRoutes);
 
 // router.post('changePassword', orgController.changeOrgPassword);
 

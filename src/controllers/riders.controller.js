@@ -14,7 +14,17 @@ const {
 } = require('../config/riderFields');
 
 exports.getDeliveryRiders = catchAsync(async (req, res, next) => {
-  const result = await db.query('SELECT * FROM delivery_riders');
+  let result;
+  if (req.user.admin_id) {
+    result = await db.query('SELECT * FROM delivery_riders');
+  }
+
+  if (req.user.partner_id) {
+    result = await db.query(
+      'SELECT * FROM delivery_riders WHERE created_by_id = ?',
+      [req.user.partner_id]
+    );
+  }
 
   const riders = result[0];
   const sanitized = riders.map(sanitizeOrganization);
