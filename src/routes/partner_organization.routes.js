@@ -25,12 +25,12 @@ router.get('/partners', orgController.getPartners);
 router.post('/login/users', loginAuthController.loginPartnerUser);
 
 router.use(authController.protect);
+router.use(authController.restrictTo('partner_organizations'));
 
 // Partner Organization User Routes
 
 router.use('/users', partnerUserRoutes);
 router.use('/:orgId/users', partnerUserRoutes);
-
 
 // Partner Inventories
 

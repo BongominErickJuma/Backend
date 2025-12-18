@@ -6,7 +6,11 @@ const router = express.Router();
 
 router.use(authController.protect);
 
-router.get('/sadmin', statController.getSuperAdminStats);
+router.get(
+  '/sadmin',
+  authController.restrictTo('super_administrators'),
+  statController.getSuperAdminStats
+);
 router.get('/main', statController.getMainStats);
 
 module.exports = router;

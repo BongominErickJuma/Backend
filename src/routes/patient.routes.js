@@ -11,7 +11,12 @@ router.get('/logout', authController.logout);
 
 router.use(authController.protect);
 
-router.route('/').get(patientController.getAllPatients);
+router
+  .route('/')
+  .get(
+    authController.restrictTo('super_administrators', 'partner_organizations'),
+    patientController.getAllPatients
+  );
 router.get('/me', patientController.getMe);
 
 router

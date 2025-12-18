@@ -17,7 +17,10 @@ router.use(authController.protect);
 
 router
   .route('/')
-  .get(riderController.getDeliveryRiders)
+  .get(
+    authController.restrictTo('super_administrators', 'partner_organizations'),
+    riderController.getDeliveryRiders
+  )
   .post(
     uploadVerificationDocuments,
     resizeVerificationDocuments,
