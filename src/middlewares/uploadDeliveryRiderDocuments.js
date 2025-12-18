@@ -48,15 +48,20 @@ const upload = multer({
   limits: { fileSize: 5 * 1024 * 1024 } // 5MB limit
 });
 
-//   'front_view',
-//   'side_view',
-//   'back_view'
-// 4. Fields
+
 exports.uploadVerificationDocuments = upload.fields([
   { name: 'front_view', maxCount: 1 },
   { name: 'side_view', maxCount: 1 },
   { name: 'back_view', maxCount: 1 },
-  { name: 'profile_picture_url', maxCount: 1 }
+  { name: 'profile_picture_url', maxCount: 1 },
+  
+  // Verification documents
+  { name: 'national_id_card', maxCount: 1 },
+  { name: 'driver_licence', maxCount: 1 },
+  { name: 'vehicle_registration_document', maxCount: 1 },
+  { name: 'vehicle_insurance_certificate', maxCount: 1 },
+  { name: 'police_clearance_certificate', maxCount: 1 },
+  { name: 'medical_fitness_certificate', maxCount: 1 }
 ]);
 
 // 5. Attach URLs to req.body
@@ -70,7 +75,7 @@ exports.resizeVerificationDocuments = catchAsync(async (req, res, next) => {
       uploadedUrls[field] = baseUrl + req.files[field][0].filename;
   };
 
-  ['front_view', 'side_view', 'back_view', 'profile_picture_url'].forEach(
+  ['front_view', 'side_view', 'back_view', 'profile_picture_url', 'vehicle_registration_document', 'vehicle_insurance_certificate', 'police_clearance_certificate', 'medical_fitness_certificate','national_id_card', 'driver_licence' ].forEach(
     mapField
   );
 

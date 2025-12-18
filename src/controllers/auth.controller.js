@@ -43,7 +43,8 @@ exports.protect = catchAsync(async (req, res, next) => {
   const allowedTables = {
     patients: 'patient_id',
     partner_organizations: 'partner_id',
-    super_administrators: 'admin_id'
+    super_administrators: 'admin_id',
+    delivery_riders: 'rider_id' // ADD THIS
   };
 
   // 4️ Validate loginType
@@ -76,8 +77,7 @@ exports.protect = catchAsync(async (req, res, next) => {
 
 exports.restrictTo = (...roles) => {
   return (req, res, next) => {
-    // roles ['admin', 'lead-guide']. role='user'
-    if (!roles.includes(req.user.role)) {
+    if (!roles.includes(req.loginType)) {
       return next(
         new AppError('You do not have permission to perform this action', 403)
       );

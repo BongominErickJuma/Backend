@@ -67,12 +67,32 @@ exports.getOneOrganization = catchAsync(async (req, res, next) => {
   });
 });
 
+
+exports.getMyOrganization = catchAsync(async (req, res, next) => {
+  const [rows] = await db.query(
+    'SELECT * FROM partner_organizations WHERE partner_id = ?',
+    [req.user.partner_id]
+  );
+
+  if (rows.length === 0) {
+    return next(new AppError('Organization not found', 404));
+  }
+
+  const organization = sanitizeOrganization(rows[0]);
+
+  res.status(200).json({
+    status: 'success',
+    organization
+  });
+});
+
+    //  WHERE verification_status = "verified"
+
 exports.getPartners = catchAsync(async (req, res, next) => {
   // Fetch verified organizations
   const [rows] = await db.query(
     `SELECT facility_name, year_established, town_city, district, logo_url, brief_description
      FROM partner_organizations
-     WHERE verification_status = "verified"
      ORDER BY year_established DESC`
   );
 
