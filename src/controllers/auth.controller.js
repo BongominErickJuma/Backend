@@ -70,7 +70,6 @@ exports.protect = catchAsync(async (req, res, next) => {
   req.user = currentUser;
   req.loginType = tableName;
 
-  console.log('logged in as:', req.loginType, req.user);
   next();
 });
 
